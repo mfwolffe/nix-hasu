@@ -591,6 +591,7 @@
     reaper-sws-extension      # Reaper plugin extension
     gimp            # Image editing
     kdePackages.kdenlive  # Video editing
+    obs-studio      # Screen recording & streaming
 
     # Office
     libreoffice     # Office suite (Writer, Calc, Impress, etc.)
