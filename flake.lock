@@ -46,8 +46,8 @@
         ]
       },
       "locked": {
-        "lastModified": 1772677118,
-        "narHash": "sha256-l+UtSvg8yNQyyMJwX5diAeoir+XKH0EhL/0iCxjRcqA=",
+        "lastModified": 1772679301,
+        "narHash": "sha256-NEnXmKE+aqmmK4DS2cphZOJTIgcRJsWGYKLDholvk1E=",
         "path": "/home/mfwolffe/GithubOrgs/mfwolffe/nix-packages",
         "type": "path"
       },
