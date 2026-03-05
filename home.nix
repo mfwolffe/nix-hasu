@@ -60,7 +60,7 @@
     '';
     shellAliases = {
       ll = "ls -la";
-      nrs = "cd /etc/nixos && nix flake update mfwolffe-pkgs && sudo nixos-rebuild switch --flake .#mizu";
+      nrs = "cd /etc/nixos && nix flake update mfwolffe-pkgs && sudo nixos-rebuild switch --flake .#hasu";
     };
   };
 
