@@ -371,6 +371,12 @@
   # Enable git
   programs.git.enable = true;
 
+  # Enable GPG (for git commit signing via gitswitch)
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = false;  # SSH handled by gitswitch-ssh, not GPG agent
+  };
+
   # zoxide (smarter cd) - disabled in favor of gump
   programs.zoxide = {
     enable = false;
@@ -592,6 +598,7 @@
     # AI coding tools
     codex            # OpenAI Codex CLI
     code-cursor      # Cursor AI code editor
+    claude-code
   ];
 
   # Fonts (Nerd Font for waybar icons, Font Awesome for polybar)

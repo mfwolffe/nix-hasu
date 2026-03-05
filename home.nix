@@ -42,6 +42,10 @@
       user.email = "wolffemf@dukes.jmu.edu";  # Change to your email
       init.defaultBranch = "trunk";
       pull.rebase = false;
+      commit.gpgsign = true;
+      tag.gpgsign = true;
+      gpg.program = "gpg";
+      # user.signingkey is set per-account by gitswitch
     };
   };
 
