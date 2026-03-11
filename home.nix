@@ -24,6 +24,9 @@
 
     # Ebook management
     calibre                 # Comprehensive ebook manager
+
+    # JavaScript runtimes
+    bun                     # Fast JS runtime (used by claude-mem MCP plugin)
   ];
 
   # Set SHELL environment variable (needed for zellij)
@@ -64,7 +67,7 @@
     '';
     shellAliases = {
       ll = "ls -la";
-      nrs = "cd /etc/nixos && nix flake update mfwolffe-pkgs && sudo nixos-rebuild switch --flake .#hasu";
+      nrs = "cd /etc/nixos && nix flake update mfwolffe-pkgs nixpkgs && sudo nixos-rebuild switch --flake .#hasu";
     };
   };
 

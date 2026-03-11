@@ -62,11 +62,11 @@
   boot.kernelParams = [ "pcie_aspm=off" ];
 
   # Disable hibernation (causes unrecoverable state with NVIDIA)
-  systemd.sleep.extraConfig = ''
-    AllowHibernation=no
-    AllowSuspendThenHibernate=no
-    AllowHybridSleep=no
-  '';
+  systemd.sleep.settings.Sleep = {
+    AllowHibernation = "no";
+    AllowSuspendThenHibernate = "no";
+    AllowHybridSleep = "no";
+  };
 
   networking.hostName = "hasu"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -382,6 +382,12 @@
     enable = false;
   };
 
+  # nix-index: provides nix-locate for finding which package contains a file
+  programs.nix-index = {
+    enable = true;
+    enableFishIntegration = true;
+  };
+
   # Enable nix-ld for running non-NixOS binaries (needed for Claude Code VSCode extension, Tauri)
   programs.nix-ld = {
     enable = true;
@@ -424,6 +430,11 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    # System
+    btop
+    htop
+    fastfetch
+
     # Hyprland essentials
     alacritty          # Terminal emulator
     wofi               # Application launcher
@@ -553,6 +564,7 @@
     tldr
     trash-cli
     pay-respects
+    tree
 
     # Gaming utilities
     mangohud        # Performance overlay (FPS, GPU/CPU stats)
@@ -600,6 +612,9 @@
     codex            # OpenAI Codex CLI
     code-cursor      # Cursor AI code editor
     claude-code
+
+    # Editing
+    neovim
   ];
 
   # Fonts (Nerd Font for waybar icons, Font Awesome for polybar)
@@ -620,6 +635,14 @@
 
   # Enable Tailscale VPN
   services.tailscale.enable = true;
+
+  # Enable nginx
+  services.nginx = {
+    enable = true;
+    virtualHosts."localHost" = {
+      root = "/var/www/localhost";
+    };
+};
 
   # Cloudflare WARP (bypass carrier throttling)
   services.cloudflare-warp.enable = true;
@@ -646,7 +669,7 @@
   };
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
+  networking.firewall.allowedTCPPorts = [ 22 80 443 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
