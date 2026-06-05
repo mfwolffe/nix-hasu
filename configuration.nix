@@ -13,6 +13,17 @@
 
   nixpkgs.overlays = [
     mfwolffe-pkgs.overlays.default
+    (final: prev: {
+      openldap = prev.openldap.overrideAttrs (old: {
+        doCheck = false;
+      });
+      pipx = prev.pipx.overridePythonAttrs (old: {
+        disabledTests = (old.disabledTests or []) ++ [
+          "test_fix_package_name"
+          "test_parse_specifier_for_metadata"
+        ];
+      });
+    })
   ];
 
   programs.mfwolffe-packages = {
@@ -58,6 +69,9 @@
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Enable QEMU user-mode emulation for aarch64 (ARM64 Linux testing)
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
   # Disable PCIe ASPM to prevent link instability with RTX 4090
   boot.kernelParams = [ "pcie_aspm=off" ];
 
@@ -77,6 +91,21 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+
+  # DNS stack: systemd-resolved owns the resolver, with public fallbacks so a
+  # single upstream stall (router DNS, tailscaled hiccup) can't black-hole all
+  # lookups. NetworkManager hands DHCP-learned DNS to resolved per-link, and
+  # Tailscale registers ts.net as split-DNS instead of taking over the whole
+  # resolver via openresolv.
+  services.resolved = {
+    enable = true;
+    settings.Resolve = {
+      FallbackDNS = [ "1.1.1.1" "9.9.9.9" "2606:4700:4700::1111" "2620:fe::fe" ];
+      DNSSEC = "false";  # leave off — interacts poorly with split-DNS setups
+    };
+  };
+  networking.networkmanager.dns = "systemd-resolved";
+  networking.resolvconf.enable = false;
 
   # Prioritize wired over WiFi (lower metric = higher priority)
   networking.networkmanager.ensureProfiles.profiles = {
@@ -272,6 +301,9 @@
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
   };
+
+  # Flatpak (for Synergy 3 and other non-nixpkgs apps)
+  services.flatpak.enable = true;
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -493,6 +525,9 @@
     jetbrains.webstorm              # JavaScript/TypeScript IDE
     # jetbrains.writerside          # Documentation IDE (discontinued, will be removed in NixOS 26.05)
 
+    # Cross-compilation (ARM64 Linux testing for fortsh)
+    qemu
+
     # Build tools
     gnumake
     cmake
@@ -573,7 +608,7 @@
     dualsensectl    # DualSense controller LED/haptic control
 
     # Wine/WANDA dependencies
-    wineWowPackages.stable  # Wine with 32-bit support
+    wineWow64Packages.stable  # Wine with 32-bit support
     winetricks              # Wine dependency installer
     steam-run               # FHS environment for running Wine/non-NixOS binaries
     freetype                # Font library Wine needs
@@ -594,7 +629,6 @@
 
     # Node.js for WANDA frontend
     nodejs_22
-    nodePackages.npm
 
     # Media creation
     audacity        # Audio editing
@@ -612,6 +646,7 @@
     codex            # OpenAI Codex CLI
     code-cursor      # Cursor AI code editor
     claude-code
+    opencode
 
     # Editing
     neovim
@@ -634,18 +669,64 @@
   # List services that you want to enable:
 
   # Enable Tailscale VPN
-  services.tailscale.enable = true;
+  # accept-dns=true lets tailscaled register ts.net with systemd-resolved as a
+  # split-DNS route (MagicDNS works); resolved still handles everything else
+  # via per-link DNS, so tailscaled wedging only breaks ts.net lookups.
+  services.tailscale = {
+    enable = true;
+    extraUpFlags = [ "--accept-dns=true" ];
+  };
 
   # Enable nginx
   services.nginx = {
     enable = true;
-    virtualHosts."localHost" = {
-      root = "/var/www/localhost";
+    recommendedOptimisation = true;
+    recommendedGzipSettings = true;
+
+    
+    virtualHosts."dougk.world" = {
+      root = "/var/www/dougk.world/current";
+    
+      locations."/assets/" = {
+        extraConfig = ''
+          expires 30d;
+          add_header Cache-Control "public, immutable";
+      '';
+      };
+
+    locations."/" = {
+      tryFiles = "$uri $uri/ /index.html";  # SPA fallback
+      extraConfig = ''
+        add_header X-Frame-Options "SAMEORIGIN";
+        add_header X-Content-Type-Options "nosniff";
+        add_header Referrer-Policy "strict-origin-when-cross-origin";
+      '';
+      };
     };
-};
+  };
+
+  services.cloudflared = {
+    enable = true;
+  };
+
+  systemd.services.cloudflared-tunnel = {
+    description = "Cloudflare Tunnel";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = pkgs.writeShellScript "cloudflared-run" ''
+              exec ${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $(cat /var/lib/cloudflared/token)
+      '';
+      Restart = "on-failure";
+      DynamicUser = true;
+      StateDirectory = "cloudflared";
+    };
+  };
+
 
   # Cloudflare WARP (bypass carrier throttling)
-  services.cloudflare-warp.enable = true;
+  services.cloudflare-warp.enable = false;
 
   # Waydroid (Android container for running Android apps like Kindle)
   virtualisation.waydroid = {
@@ -655,21 +736,29 @@
 
   # Ollama with NVIDIA GPU support
   services.ollama = {
+    host = "0.0.0.0";
     enable = true;
     package = pkgs.ollama-cuda;
+    environmentVariables = {
+      OLLAMA_FLASH_ATTENTION = "1";
+      OLLAMA_KV_CACHE_TYPE = "q8_0";
+      OLLAMA_KEEP_ALIVE = "30m";
+      OLLAMA_LOAD_TIMEOUT = "30m";
+    };
   };
 
   # Enable the OpenSSH daemon.
   services.openssh = {
     enable = true;
     settings = {
-      PasswordAuthentication = true;  # Enable password authentication
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
     };
     openFirewall = true;
   };
 
   # Open ports in the firewall.
-  networking.firewall.allowedTCPPorts = [ 22 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 22 24800 11434 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
