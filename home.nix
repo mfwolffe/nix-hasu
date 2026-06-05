@@ -18,7 +18,7 @@
     eza  # used by fzf alt-c preview
 
     # Wine for running Windows apps
-    wineWowPackages.stable  # 32-bit + 64-bit Wine
+    wineWow64Packages.stable  # 32-bit + 64-bit Wine
     winetricks              # Helper for installing Windows dependencies
     bottles                 # GUI for managing Wine prefixes
 
