@@ -7,6 +7,7 @@
 { config, pkgs, lib, mfwolffe-pkgs, ... }:
 {
   imports = [
+    ./llama-pool.nix
     ./hardware-configuration.nix
     mfwolffe-pkgs.nixosModules.default
   ];
