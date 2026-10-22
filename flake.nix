@@ -15,7 +15,11 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, mfwolffe-pkgs, ... }: {
+  outputs = { self, nixpkgs, home-manager, mfwolffe-pkgs, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+    in {
     nixosConfigurations.hasu = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit mfwolffe-pkgs; };
@@ -30,6 +34,14 @@
           home-manager.users.mfwolffe = import ./home.nix;
         }
       ];
+    };
+
+    # Dev shell for building aspen with io_uring + benchmarking (Sprint 11c).
+    # Additive only: does NOT affect nixosConfigurations / nixos-rebuild.
+    #   nix develop /etc/nixos#aspen
+    devShells.${system}.aspen = pkgs.mkShell {
+      nativeBuildInputs = with pkgs; [ gcc clang gnumake pkg-config hyperfine ];
+      buildInputs = with pkgs; [ liburing ];
     };
   };
 }
