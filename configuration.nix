@@ -564,6 +564,7 @@
     binutils
     gdb
     lldb
+    hyperfine      # Benchmark tool (tally/ferret perf gates)
 
     # Rust toolchain
     rustc
