@@ -791,4 +791,18 @@
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.11"; # Did you read the comment?
 
+  # Passwordless sudo for the wheel group, all commands.
+  security.sudo.wheelNeedsPassword = false;
+
+  # reaudit3: allow mfwolffe to drop the page cache without a password so cold-cache
+  # benchmarks (drop_caches per run) run non-interactively. Narrow: ONLY the exact
+  # tee of /proc/sys/vm/drop_caches, nothing else.
+  security.sudo.extraRules = [{
+    users = [ "mfwolffe" ];
+    commands = [{
+      command = "/run/current-system/sw/bin/tee /proc/sys/vm/drop_caches";
+      options = [ "NOPASSWD" ];
+    }];
+  }];
+
 }
