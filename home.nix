@@ -315,15 +315,19 @@
     defaultOptions = [ "--height 40%" "--border" "--reverse" ];
 
     # Ctrl+T (file widget)
-    fileWidgetCommand = "fd --type f --hidden --exclude .git";
-    fileWidgetOptions = [ "--preview 'bat --color=always --style=numbers --line-range=:500 {}'" ];
+    fileWidget = {
+      command = "fd --type f --hidden --exclude .git";
+      options = [ "--preview 'bat --color=always --style=numbers --line-range=:500 {}'" ];
+    };
 
     # Alt+C (cd widget)
-    changeDirWidgetCommand = "fd --type d --hidden --exclude .git";
-    changeDirWidgetOptions = [ "--preview 'eza --tree --color=always {} | head -50'" ];
+    changeDirWidget = {
+      command = "fd --type d --hidden --exclude .git";
+      options = [ "--preview 'eza --tree --color=always {} | head -50'" ];
+    };
 
     # Ctrl+R (history)
-    historyWidgetOptions = [ "--sort" "--exact" ];
+    historyWidget.options = [ "--sort" "--exact" ];
 
     # Colors matching zellij theme
     colors = {
