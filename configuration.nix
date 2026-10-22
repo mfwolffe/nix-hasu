@@ -18,12 +18,28 @@
       openldap = prev.openldap.overrideAttrs (old: {
         doCheck = false;
       });
+      # udisks-test/abnormal_termination is flaky under the build sandbox
+      # (times out waiting for the `completed` signal -> SIGABRT). Only hit
+      # when building locally off-cache after a nixpkgs bump.
+      udisks2 = prev.udisks2.overrideAttrs (old: {
+        doCheck = false;
+      });
       pipx = prev.pipx.overridePythonAttrs (old: {
         disabledTests = (old.disabledTests or []) ++ [
           "test_fix_package_name"
           "test_parse_specifier_for_metadata"
         ];
       });
+      # patool (bottles dep) test suite fails in the sandbox: newer libmagic
+      # reports application/x-bzip2 for .tar.bz2.foo (test expects x-tar) and
+      # the pytarfile tests can't find list_bzip2/xz/lzma programs.
+      pythonPackagesExtensions = (prev.pythonPackagesExtensions or []) ++ [
+        (pyfinal: pyprev: {
+          patool = pyprev.patool.overridePythonAttrs (old: {
+            doCheck = false;
+          });
+        })
+      ];
     })
   ];
 
